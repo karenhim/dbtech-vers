@@ -20,10 +20,13 @@ public class Jdbc {
         try (Connection c = DriverManager.getConnection(DbCred.url, DbCred.user, DbCred.password)) {
             L.info("Verbindungsaufbau erfolgreich");
             // Aufruf der eigentlichen Anwendungsfunktion
-            selectAll(c);
+            // selectAll(c);
             // selectOne(c, 1);
             // insert(c);
             // delete(c);
+            // createList(c);
+            // createObject(c,99); ->psti gaada 99
+             createObject(c,1);
         } catch (SQLException e) {
             L.error("Verbindungsaufbau gescheitert", e);
         } catch (DataException e) {
@@ -150,5 +153,4 @@ public class Jdbc {
         L.info("Ende createObject");
         return r;
     }
-
 }
