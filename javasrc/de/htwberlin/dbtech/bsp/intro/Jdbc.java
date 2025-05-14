@@ -26,7 +26,7 @@ public class Jdbc {
             // delete(c);
             // createList(c);
             // createObject(c,99); ->psti gaada 99
-             createObject(c,1);
+            // createObject(c,1);
         } catch (SQLException e) {
             L.error("Verbindungsaufbau gescheitert", e);
         } catch (DataException e) {

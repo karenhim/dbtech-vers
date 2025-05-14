@@ -34,6 +34,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         return connection;
     }
 
+    //selecting short names from Produkt table
     @Override
     public List<String> kurzBezProdukte() {
         L.info("start");
@@ -41,6 +42,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         return null;
     }
 
+    //select customer info from Kunde table
     @Override
     public Kunde findKundeById(Integer id) {
         L.info("id: " + id);
@@ -48,6 +50,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         return null;
     }
 
+    //insert a new row into Vertrag table
     @Override
     public void createVertrag(Integer id, Integer produktId, Integer kundenId, LocalDate versicherungsbeginn) {
         L.info("id: " + id);
@@ -57,6 +60,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         L.info("ende");
     }
 
+    //calculate monthly rate (probably involves Deckung, Deckungsbetrag, and Deckungspreis)
     @Override
     public BigDecimal calcMonatsrate(Integer vertragsId) {
         L.info("vertragsId: " + vertragsId);
