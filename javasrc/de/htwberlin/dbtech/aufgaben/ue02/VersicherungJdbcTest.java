@@ -74,6 +74,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Kunde existiert nicht.
+     * If the customer with ID 999 does not exist → should throw KundeExistiertNichtException.
      */
     @org.junit.Test(expected = KundeExistiertNichtException.class)
     public void bbbfindKundeById1() {
@@ -82,6 +83,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Wird richtiger Kunde zurueckgeliefert?
+     * If customer with ID 1 does exist, return their correct name and birthdate.
      */
     @org.junit.Test
     public void bbbfindKundeById2() {
@@ -95,6 +97,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Versicherungsbeginn liegt in der Vergangenheit.
+     * Date is in the past → throws DatumInVergangenheitException
      */
     @org.junit.Test(expected = DatumInVergangenheitException.class)
     public void cccCreateVertrag1() {
@@ -108,6 +111,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Vertrag existiert bereits.
+     * Contract with this ID already exists → throws VertragExistiertBereitsException
      */
     @org.junit.Test(expected = VertragExistiertBereitsException.class)
     public void cccCreateVertrag2() {
@@ -121,6 +125,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Produkt existiert nicht.
+     * Product ID doesn’t exist → throws ProduktExistiertNichtException
      */
     @org.junit.Test(expected = ProduktExistiertNichtException.class)
     public void cccCreateVertrag3() {
@@ -134,6 +139,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Kunde existiert nicht.
+     * Customer ID doesn’t exist → throws KundeExistiertNichtException
      */
     @org.junit.Test(expected = KundeExistiertNichtException.class)
     public void cccCreateVertrag4() {
@@ -147,6 +153,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Vertrag wird angelegt. Ist er in der Datenbank gespeichert?
+     * Inserts a contract, then checks it exists and the Versicherungsende is correct
      */
     @org.junit.Test
     public void cccCreateVertrag5() throws Exception {
@@ -174,6 +181,7 @@ public class VersicherungJdbcTest {
 
     /**
      * Wird die monatliche Rate richtig berechnet?.
+     * Calculates the monthly rate for contracts via JOIN and SUM
      */
     @org.junit.Test
     public void dddcalcMonatsrate() {
