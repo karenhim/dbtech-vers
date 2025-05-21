@@ -28,6 +28,7 @@ public class VersicherungServiceJavaTest {
     private static IDatabaseConnection dbTesterCon = null;
 
     private static final IVersicherungService vService = new VersicherungService();
+    //components are instantiated
 
     @BeforeClass
     public static void setUp() {
@@ -126,6 +127,8 @@ public class VersicherungServiceJavaTest {
     public void createDeckung08() {
         vService.createDeckung(6, 1, BigDecimal.valueOf(100000000));
     }
+    // betrachten Ablehnungsregel
+    // die Ablehnungsregel dlm bntk string...gtw relevan ato ngga sih wkwk
 
     /**
      * Vertrag 7 (LBV) hat einen Kunden, der der aelter als 90 Jahre ist.

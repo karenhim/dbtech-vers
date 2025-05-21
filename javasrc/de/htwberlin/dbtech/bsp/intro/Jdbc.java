@@ -15,12 +15,12 @@ public class Jdbc {
     private static final Logger L = LoggerFactory.getLogger(Jdbc.class);
 
     public static void main(String[] args) {
-        L.info("Start");
+        L.info("Start 1 2 3..");
 
         try (Connection c = DriverManager.getConnection(DbCred.url, DbCred.user, DbCred.password)) {
             L.info("Verbindungsaufbau erfolgreich");
             // Aufruf der eigentlichen Anwendungsfunktion
-            // selectAll(c);
+             selectAll(c);
             // selectOne(c, 1);
             // insert(c);
             // delete(c);
