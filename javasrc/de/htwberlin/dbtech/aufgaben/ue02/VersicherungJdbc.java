@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Always use try-with-resources for PreparedStatement and ResultSet
+ * Use try-with-resources for PreparedStatement and ResultSet
  * Get the connection using a separate method (useConnection())
  * Use logging (L.info, L.warn, L.error) for readibility
  * Convert SQL types (like Date) carefully to/from Java types (LocalDate)
@@ -31,9 +31,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
             L.error("Connection not set before use.");
             throw new DataException("Connection not set");
         }
-        // Hier keine Prüfung auf isClosed(), da dies bei jedem Aufruf Overhead erzeugt.
-        // Die aufrufende Methode muss mit SQLExceptions (wie "closed connection") umgehen können.
-        return connection;
+         return connection;
     }
 
     /**
@@ -49,7 +47,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         String sql = "SELECT KurzBez FROM Produkt ORDER BY ID"; // implementation!
         Connection conn = useConnection(); // Verbindung holen, aber nicht im try-with-resources
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql); // alle Values/Werte kollektieren
+        try (PreparedStatement pstmt = conn.prepareStatement(sql); // alle Values/Werte sammeln
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
@@ -80,7 +78,8 @@ public class VersicherungJdbc implements IVersicherungJdbc {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) { //check is the result exists
                     String name = rs.getString("Name");
-                    LocalDate geburtsdatum = rs.getDate("Geburtsdatum").toLocalDate(); //converting java.sql.date to LocalDate()
+                    LocalDate geburtsdatum = rs.getDate("Geburtsdatum").toLocalDate();
+                    //converting java.sql.date to LocalDate() (avoid confusion with time or timezone)
                     kunde = new Kunde(id, name, geburtsdatum);
                 } else {
                     L.warn("Kunde mit ID {} nicht gefunden.", id);
@@ -99,6 +98,8 @@ public class VersicherungJdbc implements IVersicherungJdbc {
 
     /**
      * Helper methods for createVertrag tests
+     * entityExists prevents repeating code
+     * & is reusable for 3 checks (Kunde, Produkt, Vertrag)
      * @param tableName
      * @param idColumnName
      * @param id
@@ -140,29 +141,32 @@ public class VersicherungJdbc implements IVersicherungJdbc {
 
         Connection conn = useConnection(); // Verbindung einmal holen für diese Methode
 
-        try { //"Cretae a new insurance contract only if..."
+        try { //"Create a new insurance contract only if..."
             if (versicherungsbeginn.isBefore(LocalDate.now())) { //Use LocalDate.now() to compare the input start date
                 L.warn("Versuch, Vertrag mit Datum in Vergangenheit zu erstellen: {}", versicherungsbeginn);
-                throw new DatumInVergangenheitException(versicherungsbeginn); //the start date IS NOT in the past → rejects contract in the past
+                throw new DatumInVergangenheitException(versicherungsbeginn);
             }
 
             // Existenzprüfungen verwenden die bereits geholte `conn` implizit durch `useConnection()`
 
-            if (!produktExistiert(produktId)) { //the contract ID DOES NOT already exist → test fails if contract already exists
+            if (!produktExistiert(produktId)) {
                 L.warn("Produkt mit ID {} existiert nicht.", produktId);
-                throw new ProduktExistiertNichtException(produktId); //throws exception for unknown contracts
+                throw new ProduktExistiertNichtException(produktId); //throws exception for non-existing contracts
             }
 
             if (!kundeExistiert(kundenId)) {
                 L.warn("Kunde mit ID {} existiert nicht.", kundenId);
-                throw new KundeExistiertNichtException(kundenId); //throws exception for unknown customers
+                throw new KundeExistiertNichtException(kundenId); //throws exception for non-existing customers
             }
 
             if (vertragExistiert(id)) {
                 L.warn("Vertrag mit ID {} existiert bereits.", id);
-                throw new VertragExistiertBereitsException(id); //throws exception for existing contracts
+                throw new VertragExistiertBereitsException(id); //throws exception for non-existing contract ID
             }
 
+            /**
+             * Calculate Versicherungsende = Versicherungsbeginn + 1Y - 1D
+             */
             LocalDate versicherungsende = versicherungsbeginn.plusYears(1).minusDays(1);
             String sql = "INSERT INTO Vertrag (ID, Produkt_FK, Kunde_FK, Versicherungsbeginn, Versicherungsende) VALUES (?, ?, ?, ?, ?)";
 
@@ -210,7 +214,7 @@ public class VersicherungJdbc implements IVersicherungJdbc {
                     versicherungsbeginn = rsVertrag.getDate("Versicherungsbeginn").toLocalDate();
                 } else {
                     L.warn("Vertrag mit ID {} für Ratenberechnung nicht gefunden.", vertragsId);
-                    throw new VertragExistiertNichtException(vertragsId);
+                    throw new VertragExistiertNichtException(vertragsId); //if get Verischerungsbeginn not found
                 }
             }
         } catch (VertragExistiertNichtException e) {
@@ -220,15 +224,18 @@ public class VersicherungJdbc implements IVersicherungJdbc {
             throw new DataException("DB Fehler beim Holen des Versicherungsbeginns für Vertrag ID " + vertragsId, e);
         }
 
-        // prices should be valid got Versingerungsbeginn between Gueltig_Von and Gueltig_Bis
+        // JOIN the tables Deckung, Deckungsbetrag, Deckungspreis
+
         // SQL Query:
         String preisSql = "SELECT SUM(dp.Preis) AS Gesamtpreis " +
+                // SUM (dp.Preis) for all matching rows...→ If no rows found, sum = 0
                 "FROM Deckung d " +
                 "JOIN Deckungsbetrag db ON d.Deckungsart_FK = db.Deckungsart_FK AND d.Deckungsbetrag = db.Deckungsbetrag " +
                 "JOIN Deckungspreis dp ON db.ID = dp.Deckungsbetrag_FK " +
                 "WHERE d.Vertrag_FK = ? " +
-                "AND ? >= dp.Gueltig_Von " +
+                "AND ? >= dp.Gueltig_Von " + //Filter Deckungspreis rows
                 "AND ? <= dp.Gueltig_Bis";
+                // prices should be valid between Gueltig_Von and Gueltig_Bis
 
         try (PreparedStatement pstmtPreis = conn.prepareStatement(preisSql)) {
             pstmtPreis.setInt(1, vertragsId);
@@ -249,6 +256,6 @@ public class VersicherungJdbc implements IVersicherungJdbc {
         }
 
         L.info("calcMonatsrate: ende, vertragsId={}, monatsrate={}", vertragsId, monatsrate);
-        return monatsrate;
+        return monatsrate; //Return als BigDecimal
     }
 }

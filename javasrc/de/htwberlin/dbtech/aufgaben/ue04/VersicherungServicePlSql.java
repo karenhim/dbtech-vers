@@ -50,7 +50,7 @@ public class VersicherungServicePlSql implements IVersicherungService {
             } else if (e.getErrorCode() == 20003) {
                 throw new DeckungsartExistiertNichtException(deckungsartId);
             } else if (e.getErrorCode() == 20004) {
-                throw new UngueltigerDeckungsbetragException(deckungsbetrag);
+                throw new UngueltigerDeckungsbetragException(deckungsartId, deckungsbetrag);
             } else if (e.getErrorCode() == 20005) {
                 throw new DeckungsartPasstNichtZuProduktException();
             } else if (e.getErrorCode() == 20006) {

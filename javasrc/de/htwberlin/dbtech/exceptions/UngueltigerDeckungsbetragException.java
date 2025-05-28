@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  */
 public class UngueltigerDeckungsbetragException extends VersicherungException {
 
-    public UngueltigerDeckungsbetragException(BigDecimal deckungsbetrag) {
+    public UngueltigerDeckungsbetragException(Integer deckungsartId, BigDecimal deckungsbetrag) {
         super("deckungsbetrag: " + deckungsbetrag);
     }
 
